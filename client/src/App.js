@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { AnalyticsProvider } from './context/AnalyticsContext';
@@ -27,8 +27,6 @@ import Profile from './pages/Profile';
 import PreloadResources from './components/PreloadResources';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
-import Courses from './pages/Courses';
-import CourseDetail from './pages/CourseDetail';
 import UserDashboard from './pages/UserDashboard';
 import SearchResults from './pages/SearchResults';
 
@@ -45,12 +43,30 @@ function App() {
                     <PreloadResources />
                     <div className="min-h-screen flex flex-col">
                       <Navbar />
-                      <Cart />
-                      <main className="flex-grow">
+                      <Cart />                      <main className="flex-grow">
                         <Routes>
+                          {/* Public Routes */}
                           <Route path="/" element={<Home />} />
                           <Route path="/about" element={<About />} />
                           <Route path="/services" element={<Services />} />
+                          <Route path="/login" element={<Login />} />
+
+                          {/* User Routes */}
+                          <Route path="/user/dashboard" element={
+                            <ProtectedRoute>
+                              <UserDashboard />
+                            </ProtectedRoute>
+                          } />
+
+                          {/* Admin Routes */}
+                          <Route path="/admin/*" element={
+                            <ProtectedRoute requireAdmin={true}>
+                              <Routes>
+                                <Route path="dashboard" element={<AdminDashboard />} />
+                                <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+                              </Routes>
+                            </ProtectedRoute>
+                          } />
                           <Route path="/portfolio" element={<Portfolio />} />
                           <Route path="/contact" element={<Contact />} />
                           <Route path="/checkout" element={<Checkout />} />
@@ -71,8 +87,6 @@ function App() {
                           } />
                           <Route path="/blog" element={<Blog />} />
                           <Route path="/blog/:slug" element={<BlogPost />} />
-                          <Route path="/courses" element={<Courses />} />
-                          <Route path="/courses/:slug" element={<CourseDetail />} />
                           <Route path="/dashboard" element={
                             <ProtectedRoute>
                               <UserDashboard />

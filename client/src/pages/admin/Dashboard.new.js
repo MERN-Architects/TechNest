@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AnalyticsContext } from '../../../context/AnalyticsContext';
-import axios from 'axios';
+import axios from '../../../utils/axios';
 
 const Dashboard = () => {
   const { trackPageView } = useContext(AnalyticsContext);

@@ -17,16 +17,34 @@ const auth = async (req, res, next) => {
             res.setHeader(key, value);
         });
 
-        // Try cookie first, then Authorization header
-        let token = req.cookies?.token || req.header('Authorization')?.replace('Bearer ', '');
+        // Get token from cookie or Authorization header
+        let token = req.cookies?.accessToken || req.header('Authorization')?.replace('Bearer ', '');
         
         if (!token) {
-            throw new Error('No token provided');
+            return res.status(401).json({ 
+                code: 'TOKEN_MISSING',
+                message: 'Authentication required'
+            });
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findOne({ _id: decoded.userId });
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET, {
+                audience: process.env.JWT_AUDIENCE || 'technest-api',
+                issuer: process.env.JWT_ISSUER || 'technest'
+            });
+        } catch (err) {
+            if (err.name === 'TokenExpiredError') {
+                return res.status(401).json({
+                    code: 'TOKEN_EXPIRED',
+                    message: 'Token has expired'
+                });
+            }
+            throw err;
+        }
 
+        const user = await User.findOne({ _id: decoded.uid }).select('-password');
+        
         if (!user) {
             throw new Error('User not found');
         }

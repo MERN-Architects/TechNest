@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../utils/axios';
 import { Link } from 'react-router-dom';
 
 const SearchResults = () => {

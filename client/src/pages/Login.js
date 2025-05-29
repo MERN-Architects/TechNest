@@ -44,11 +44,15 @@ const Login = () => {
 
             if (!response.ok) {
                 throw new Error(data.message || 'Login failed');
-            }
-
-            // Store the token and user data
+            }            // Store the token and user data
             login(data.user, data.token);
-            navigate(from, { replace: true });
+            
+            // Redirect based on user role
+            if (data.user.role === 'admin') {
+                navigate('/admin/dashboard', { replace: true });
+            } else {
+                navigate('/user/dashboard', { replace: true });
+            }
         } catch (err) {
             console.error('Login error:', err);
             setError(err.message || 'Failed to connect to server. Please try again.');

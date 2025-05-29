@@ -43,7 +43,11 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    lockUntil: Date
+    lockUntil: Date,
+    tokenVersion: {
+        type: Number,
+        default: 0
+    }
 });
 
 // Hash password before saving
@@ -83,6 +87,12 @@ userSchema.methods.incrementLoginAttempts = async function() {
     }
     
     await this.save();
+};
+
+// Method to increment token version
+userSchema.methods.incrementTokenVersion = function() {
+    this.tokenVersion += 1;
+    return this.save();
 };
 
 module.exports = mongoose.model('User', userSchema);

@@ -7,18 +7,25 @@ import {
     XMarkIcon, 
     ShoppingCartIcon,
     SunIcon, 
-    MoonIcon
+    MoonIcon,
+    UserCircleIcon
 } from '@heroicons/react/24/outline';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import Search from './Search';
 
 const Navbar = () => {
     const { isDarkMode, toggleTheme } = useTheme();
+    const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [scrollPosition, setScrollPosition] = useState(0);
     const { getCartCount, setIsCartOpen } = useCart();
+    const [navLinks, setNavLinks] = useState([]);    // Update navigation links when user changes
+    useEffect(() => {
+        setNavLinks(getNavLinks(user));
+    }, [user]);
 
     // Handle scroll effect
     useEffect(() => {
@@ -29,17 +36,53 @@ const Navbar = () => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    const handleLogout = async () => {
+        await logout();
+        navigate('/login');
+        setIsMenuOpen(false);
+    };
+
     const handleLogoClick = () => {
         navigate('/', { replace: true });
-    };    const navLinks = [
-        { path: '/', label: 'Home' },
-        { path: '/about', label: 'About' },
-        { path: '/team', label: 'Team' },
-        { path: '/services', label: 'Services' },
-        { path: '/portfolio', label: 'Portfolio' },
-        { path: '/blog', label: 'Blog' },
-        { path: '/contact', label: 'Contact' }
-    ];
+    };    const getNavLinks = (user) => {
+        // Common links for all users (public pages)
+        const commonLinks = [
+            { path: '/', label: 'Home' },
+            { path: '/about', label: 'About' },
+            { path: '/services', label: 'Services' },
+            { path: '/portfolio', label: 'Portfolio' },
+            { path: '/blog', label: 'Blog' },
+            { path: '/team', label: 'Team' },
+            { path: '/contact', label: 'Contact' }
+        ];
+
+        if (!user) {
+            return [...commonLinks];
+        }
+
+        // Links for authenticated users
+        const authenticatedLinks = [
+            { path: '/orders', label: 'Orders' },
+            { path: '/profile', label: 'Profile' }
+        ];
+
+        if (user.role === 'admin') {
+            return [
+                ...commonLinks,
+                ...authenticatedLinks,
+                { path: '/admin/dashboard', label: 'Admin Dashboard' },
+                { path: '/admin/overview', label: 'Analytics' },
+                { path: '/admin/blog', label: 'Blog Management' },
+                { path: '/test-connection', label: 'System Status' }
+            ];
+        }
+
+        return [
+            ...commonLinks,
+            ...authenticatedLinks,
+            { path: '/user/dashboard', label: 'Dashboard' }
+        ];
+    };
 
     const containerVariants = {
         hidden: { opacity: 0, y: -5 },

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../utils/axios';
 import ReactMarkdown from 'react-markdown';
 
 const BlogPost = () => {

@@ -30,6 +30,7 @@ import {
     Legend,
     Filler
 } from 'chart.js';
+import Analytics from '../../components/admin/Analytics';
 
 // Register ChartJS components
 ChartJS.register(
@@ -424,6 +425,11 @@ const AdminDashboard = () => {
                         </motion.div>
                     )}
                 </AnimatePresence>
+
+                {/* Add Analytics Component */}
+                <div className="p-4 sm:p-6 lg:p-8">
+                    <Analytics />
+                </div>
             </div>
         </div>
     );

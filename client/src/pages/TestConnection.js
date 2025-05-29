@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
+import axios from '../utils/axios';
 
 const TestConnection = () => {
     const [message, setMessage] = useState('');
@@ -10,13 +11,12 @@ const TestConnection = () => {
         const testConnection = async () => {
             try {
                 console.log('Testing connection to server...');
-                const response = await fetch('http://localhost:5001/api/test');
-                const data = await response.json();
-                console.log('Server response:', data);
-                setMessage(data.message);
+                const response = await axios.get('/test');
+                console.log('Server response:', response.data);
+                setMessage(response.data.message);
             } catch (err) {
                 console.error('Connection error:', err);
-                setError('Failed to connect to server: ' + err.message);
+                setError('Failed to connect to server: ' + (err.response?.data?.message || err.message));
             }
         };
 
@@ -48,4 +48,4 @@ const TestConnection = () => {
     );
 };
 
-export default TestConnection; 
+export default TestConnection;

@@ -19,6 +19,8 @@ A modern, responsive website for TechNest Solutions built with the MERN stack (M
 - 📈 Analytics tracking
 - 🚀 Optimized performance with lazy loading
 
+> **Note**: As of May 2025, the course management system has been removed from this project. If you're looking for a version with course management features, please check the releases prior to v2.0.0.
+
 ## 🛠️ Tech Stack
 
 ### Frontend
@@ -173,4 +175,4 @@ technest/
 
 ## License
 
-This project is licensed under the MIT License. 
+This project is licensed under the MIT License.
