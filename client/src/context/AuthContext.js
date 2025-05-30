@@ -7,26 +7,72 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [refreshTimer, setRefreshTimer] = useState(null);
+
+    // Function to refresh the access token
+    const refreshAccessToken = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/refresh', {
+                method: 'POST',
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Token refresh failed');
+            }
+
+            // Token is set via httpOnly cookie, no need to handle it here
+            return true;
+        } catch (error) {
+            console.error('Token refresh error:', error);
+            // If refresh fails, log out the user
+            await logout();
+            return false;
+        }
+    };
+
+    // Setup token refresh interval
+    const setupRefreshTimer = () => {
+        // Refresh token 1 minute before it expires (14 minutes for 15-minute token)
+        const refreshInterval = 14 * 60 * 1000;
+        
+        const timerId = setInterval(refreshAccessToken, refreshInterval);
+        setRefreshTimer(timerId);
+        
+        return timerId;
+    };
 
     useEffect(() => {
-        // Check for stored token and user data
-        const storedToken = localStorage.getItem('token');
-        const storedUser = localStorage.getItem('user');
-        
-        if (storedToken && storedUser) {
-            setToken(storedToken);
-            setUser(JSON.parse(storedUser));
-        }
-        setIsLoading(false);
-    }, []);
+        // Initial auth check
+        const checkAuth = async () => {
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/check', {
+                    credentials: 'include'
+                });
 
-    const login = (userData, authToken) => {
+                if (response.ok) {
+                    const data = await response.json();
+                    setUser(data.user);
+                    setupRefreshTimer();
+                }
+            } catch (error) {
+                console.error('Auth check error:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        checkAuth();
+
+        return () => {
+            if (refreshTimer) {
+                clearInterval(refreshTimer);
+            }
+        };
+    }, []);    const login = (userData) => {
         setUser(userData);
-        setToken(authToken);
-        localStorage.setItem('token', authToken);
-        localStorage.setItem('user', JSON.stringify(userData));
-        localStorage.setItem('userId', userData.id);
         sessionStorage.setItem('sessionId', Date.now().toString());
+        setupRefreshTimer();
         
         // Track login event
         trackDetailedUserAction('user_login', {

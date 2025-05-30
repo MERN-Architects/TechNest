@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
@@ -13,12 +13,18 @@ const Login = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [requires2FA, setRequires2FA] = useState(false);
-    const navigate = useNavigate();
+    const [loginSuccess, setLoginSuccess] = useState(false);
     const location = useLocation();
-    const { login } = useAuth();
+    const { login, user: currentUser } = useAuth();
     const { isDarkMode } = useTheme();
-
-    const from = location.state?.from?.pathname || '/admin';
+    
+    // Get the login type from URL or default to user
+    const loginType = location.pathname === '/admin/login' ? 'admin' : 'user';
+      // If already logged in or login was successful, redirect
+    if (currentUser || loginSuccess) {
+        const redirectPath = currentUser?.role === 'admin' ? '/admin/dashboard' : '/user/dashboard';
+        return <Navigate to={redirectPath} replace state={{ from: location }} />;
+    }
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -39,20 +45,41 @@ const Login = () => {
                     ...(requires2FA ? { totpCode } : {})
                 })
             });
-
+            
             const data = await response.json();
 
             if (!response.ok) {
+                if (data.requiresTwoFactor) {
+                    setRequires2FA(true);
+                    setError('Please enter your 2FA code');
+                    return;
+                }
+                
+                if (data.code === 'ROLE_MISMATCH') {
+                    setError(loginType === 'admin' 
+                        ? 'This account does not have admin privileges' 
+                        : 'Please use the admin login page');
+                    return;
+                }
+
                 throw new Error(data.message || 'Login failed');
-            }            // Store the token and user data
-            login(data.user, data.token);
-            
-            // Redirect based on user role
-            if (data.user.role === 'admin') {
-                navigate('/admin/dashboard', { replace: true });
-            } else {
-                navigate('/user/dashboard', { replace: true });
             }
+
+            // Validate role matches login type
+            if (loginType === 'admin' && data.user.role !== 'admin') {
+                setError('This account does not have admin privileges');
+                return;
+            }
+            
+            if (loginType === 'user' && data.user.role === 'admin') {
+                setError('Please use the admin login page');
+                return;
+            }
+
+            // Store the token and user data
+            await login(data.user, data.token);
+            setLoginSuccess(true);
+
         } catch (err) {
             console.error('Login error:', err);
             setError(err.message || 'Failed to connect to server. Please try again.');
@@ -80,12 +107,13 @@ const Login = () => {
                             className="inline-block p-3 rounded-full bg-indigo-100 dark:bg-indigo-900 mb-4"
                         >
                             <ShieldCheckIcon className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
-                        </motion.div>
-                        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                            Admin Login
+                        </motion.div>                        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+                            {loginType === 'admin' ? 'Admin Login' : 'User Login'}
                         </h2>
                         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                            Sign in to access the dashboard
+                            {loginType === 'admin' 
+                                ? 'Sign in to access the admin dashboard'
+                                : 'Sign in to your account'}
                         </p>
                     </div>
 
